@@ -702,6 +702,7 @@ inline std::string stop_type_to_str(stop_type type) {
 struct completion_token_output {
     llama_token tok;
     float prob;
+    float logit;
     std::string text_to_send;
     struct prob_info {
         llama_token tok;
@@ -743,6 +744,7 @@ struct completion_token_output {
                     post_sampling_probs ? "prob" : "logprob",
                     post_sampling_probs ? p.prob : logarithm(p.prob)
                 },
+                {"logit",        p.logit},
                 {
                     post_sampling_probs ? "top_probs" : "top_logprobs",
                     p.to_json(post_sampling_probs)
@@ -2686,6 +2688,7 @@ struct server_context {
             // set probability for sampled token
             for (size_t i = 0; i < max_probs; i++) {
                 if (cur_p->data[i].id == result.tok) {
+                    result.logit = cur_p->data[i].logit;
                     result.prob = cur_p->data[i].p;
                     break;
                 }
@@ -2710,6 +2713,7 @@ struct server_context {
                 // set probability for sampled token
                 if (cur[i].id == result.tok) {
                     result.prob = cur[i].p;
+                    result.logit = cur[i].logit;
                     break;
                 }
             }
