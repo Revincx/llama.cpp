@@ -253,3 +253,45 @@ jobs:
                          -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=BOTH
 
           cmake --build build --config Release -j $(nproc)
+
+  ubuntu-24-riscv64-cpu-spacemit-ime-cross:
+    runs-on: ubuntu-24.04
+
+    env:
+      # Make sure this is in sync with build-cache.yml
+      SPACEMIT_IME_TOOLCHAIN_VERSION: "1.1.2"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use SpacemiT Toolchain Cache
+        uses: actions/cache@v4
+        id: cache-toolchain
+        with:
+          path: ./spacemit_toolchain
+          key: spacemit-ime-toolchain-v${{ env.SPACEMIT_IME_TOOLCHAIN_VERSION }}-${{ runner.os }}
+
+      - name: Setup SpacemiT Toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: ./.github/actions/linux-setup-spacemit
+        with:
+          path: ./spacemit_toolchain
+          version: ${{ env.SPACEMIT_IME_TOOLCHAIN_VERSION }}
+
+      - name: Build
+        run: |
+          export RISCV_ROOT_PATH=${PWD}/spacemit_toolchain
+          cmake -B build -DLLAMA_CURL=OFF \
+                         -DCMAKE_BUILD_TYPE=Release \
+                         -DGGML_OPENMP=OFF \
+                         -DLLAMA_BUILD_EXAMPLES=ON \
+                         -DLLAMA_BUILD_TOOLS=ON \
+                         -DLLAMA_BUILD_TESTS=OFF \
+                         -DGGML_CPU_RISCV64_SPACEMIT=ON \
+                         -DGGML_RVV=ON \
+                         -DGGML_RV_ZFH=ON \
+                         -DGGML_RV_ZICBOP=ON \
+                         -DRISCV64_SPACEMIT_IME_SPEC=RISCV64_SPACEMIT_IME1 \
+                         -DCMAKE_TOOLCHAIN_FILE=${PWD}/cmake/riscv64-spacemit-linux-gnu-gcc.cmake
+
+          cmake --build build --config Release -j $(nproc)
