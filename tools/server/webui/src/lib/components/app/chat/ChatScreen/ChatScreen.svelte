@@ -5,13 +5,13 @@
 		ChatScreenHeader,
 		ChatScreenWarning,
 		ChatMessages,
-		ChatProcessingInfo,
-		EmptyFileAlertDialog,
-		ChatErrorDialog,
+		ChatScreenProcessingInfo,
+		DialogEmptyFileAlert,
+		DialogChatError,
 		ServerErrorSplash,
 		ServerInfo,
 		ServerLoadingSplash,
-		ConfirmationDialog
+		DialogConfirmation
 	} from '$lib/components/app';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import {
@@ -82,6 +82,8 @@
 
 	let activeErrorDialog = $derived(errorDialog());
 	let isServerLoading = $derived(serverLoading());
+
+	let isCurrentConversationLoading = $derived(isLoading());
 
 	async function handleDeleteConfirm() {
 		const conversation = activeConversation();
@@ -254,7 +256,7 @@
 	});
 
 	$effect(() => {
-		if (isLoading() && autoScrollEnabled) {
+		if (isCurrentConversationLoading && autoScrollEnabled) {
 			scrollInterval = setInterval(scrollChatToBottom, AUTO_SCROLL_INTERVAL);
 		} else if (scrollInterval) {
 			clearInterval(scrollInterval);
@@ -297,7 +299,7 @@
 			class="pointer-events-none sticky right-0 bottom-0 left-0 mt-auto"
 			in:slide={{ duration: 150, axis: 'y' }}
 		>
-			<ChatProcessingInfo />
+			<ChatScreenProcessingInfo />
 
 			{#if serverWarning()}
 				<ChatScreenWarning class="pointer-events-auto mx-auto max-w-[48rem] px-4" />
@@ -305,7 +307,7 @@
 
 			<div class="conversation-chat-form pointer-events-auto rounded-t-3xl pb-4">
 				<ChatForm
-					isLoading={isLoading()}
+					isLoading={isCurrentConversationLoading}
 					onFileRemove={handleFileRemove}
 					onFileUpload={handleFileUpload}
 					onSend={handleSendMessage}
@@ -331,7 +333,7 @@
 		ondrop={handleDrop}
 		role="main"
 	>
-		<div class="w-full max-w-2xl px-4">
+		<div class="w-full max-w-[48rem] px-4">
 			<div class="mb-8 text-center" in:fade={{ duration: 300 }}>
 				<h1 class="mb-2 text-3xl font-semibold tracking-tight">llama.cpp</h1>
 
@@ -348,7 +350,7 @@
 
 			<div in:fly={{ y: 10, duration: 250, delay: 300 }}>
 				<ChatForm
-					isLoading={isLoading()}
+					isLoading={isCurrentConversationLoading}
 					onFileRemove={handleFileRemove}
 					onFileUpload={handleFileUpload}
 					onSend={handleSendMessage}
@@ -366,7 +368,7 @@
 	<AlertDialog.Portal>
 		<AlertDialog.Overlay />
 
-		<AlertDialog.Content class="max-w-md">
+		<AlertDialog.Content class="flex max-w-md flex-col">
 			<AlertDialog.Header>
 				<AlertDialog.Title>File Upload Error</AlertDialog.Title>
 
@@ -375,7 +377,7 @@
 				</AlertDialog.Description>
 			</AlertDialog.Header>
 
-			<div class="space-y-4">
+			<div class="!max-h-[50vh] min-h-0 flex-1 space-y-4 overflow-y-auto">
 				{#if fileErrorData.generallyUnsupported.length > 0}
 					<div class="space-y-2">
 						<h4 class="text-sm font-medium text-destructive">Unsupported File Types</h4>
@@ -396,8 +398,6 @@
 
 				{#if fileErrorData.modalityUnsupported.length > 0}
 					<div class="space-y-2">
-						<h4 class="text-sm font-medium text-destructive">Model Compatibility Issues</h4>
-
 						<div class="space-y-1">
 							{#each fileErrorData.modalityUnsupported as file (file.name)}
 								<div class="rounded-md bg-destructive/10 px-3 py-2">
@@ -413,14 +413,14 @@
 						</div>
 					</div>
 				{/if}
+			</div>
 
-				<div class="rounded-md bg-muted/50 p-3">
-					<h4 class="mb-2 text-sm font-medium">This model supports:</h4>
+			<div class="rounded-md bg-muted/50 p-3">
+				<h4 class="mb-2 text-sm font-medium">This model supports:</h4>
 
-					<p class="text-sm text-muted-foreground">
-						{fileErrorData.supportedTypes.join(', ')}
-					</p>
-				</div>
+				<p class="text-sm text-muted-foreground">
+					{fileErrorData.supportedTypes.join(', ')}
+				</p>
 			</div>
 
 			<AlertDialog.Footer>
@@ -432,7 +432,7 @@
 	</AlertDialog.Portal>
 </AlertDialog.Root>
 
-<ConfirmationDialog
+<DialogConfirmation
 	bind:open={showDeleteDialog}
 	title="Delete Conversation"
 	description="Are you sure you want to delete this conversation? This action cannot be undone and will permanently remove all messages in this conversation."
@@ -444,7 +444,7 @@
 	onCancel={() => (showDeleteDialog = false)}
 />
 
-<EmptyFileAlertDialog
+<DialogEmptyFileAlert
 	bind:open={showEmptyFileDialog}
 	emptyFiles={emptyFileNames}
 	onOpenChange={(open) => {
@@ -454,7 +454,7 @@
 	}}
 />
 
-<ChatErrorDialog
+<DialogChatError
 	message={activeErrorDialog?.message ?? ''}
 	onOpenChange={handleErrorDialogOpenChange}
 	open={Boolean(activeErrorDialog)}
