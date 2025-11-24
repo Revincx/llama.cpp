@@ -716,6 +716,7 @@ struct completion_token_output {
         llama_token tok;
         std::string txt;
         float prob;
+        float logit;
     };
     std::vector<prob_info> probs;
 
@@ -732,6 +733,7 @@ struct completion_token_output {
                     post_sampling_probs ? "prob" : "logprob",
                     post_sampling_probs ? p.prob : logarithm(p.prob)
                 },
+                {"logit",   p.logit},
             });
         }
         return probs_for_token;
@@ -3020,7 +3022,8 @@ struct server_context {
                 result.probs.push_back({
                     cur_p->data[i].id,
                     common_token_to_piece(ctx, cur_p->data[i].id, special),
-                    cur_p->data[i].p
+                    cur_p->data[i].p,
+                    cur_p->data[i].logit
                 });
             }
         } else {
@@ -3042,7 +3045,8 @@ struct server_context {
                 result.probs.push_back({
                     cur[i].id,
                     common_token_to_piece(ctx, cur[i].id, special),
-                    cur[i].p
+                    cur[i].p,
+                    cur[i].logit
                 });
             }
         }
