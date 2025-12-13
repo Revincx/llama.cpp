@@ -236,12 +236,14 @@ using server_task_result_ptr = std::unique_ptr<server_task_result>;
 struct completion_token_output {
     llama_token tok;
     float prob;
+    float logit;
     std::string text_to_send;
     std::string incomplete_utf8_prefix; // incomplete UTF-8 bytes from previous tokens
     struct prob_info {
         llama_token tok;
         std::string txt;
         float prob;
+        float logit;
     };
     std::vector<prob_info> probs;
 

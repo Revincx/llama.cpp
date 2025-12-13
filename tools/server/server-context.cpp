@@ -1244,7 +1244,8 @@ struct server_context_impl {
                 result.probs.push_back({
                     cur_p->data[i].id,
                     common_token_to_piece(ctx, cur_p->data[i].id, special),
-                    cur_p->data[i].p
+                    cur_p->data[i].p,
+                    cur_p->data[i].logit
                 });
             }
         } else {
@@ -1256,6 +1257,7 @@ struct server_context_impl {
                 // set probability for sampled token
                 if (cur[i].id == result.tok) {
                     result.prob = cur[i].p;
+                    result.logit = cur[i].logit;
                     break;
                 }
             }
@@ -1266,7 +1268,8 @@ struct server_context_impl {
                 result.probs.push_back({
                     cur[i].id,
                     common_token_to_piece(ctx, cur[i].id, special),
-                    cur[i].p
+                    cur[i].p,
+                    cur[i].logit
                 });
             }
         }

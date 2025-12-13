@@ -530,6 +530,7 @@ json completion_token_output::to_json(bool post_sampling_probs) const {
                 post_sampling_probs ? "prob" : "logprob",
                 post_sampling_probs ? p.prob : logarithm(p.prob)
             },
+            {"logit",   p.logit}
         });
     }
     return probs_for_token;
@@ -548,6 +549,7 @@ json completion_token_output::probs_vector_to_json(const std::vector<completion_
                 post_sampling_probs ? "prob" : "logprob",
                 post_sampling_probs ? p.prob : logarithm(p.prob)
             },
+            {"logit",   p.logit},
             {
                 post_sampling_probs ? "top_probs" : "top_logprobs",
                 p.to_json(post_sampling_probs)
