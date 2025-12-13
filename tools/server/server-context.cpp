@@ -1219,6 +1219,14 @@ struct server_context_impl {
         size_t n_probs = slot.task->params.sampling.n_probs;
         size_t n_vocab = llama_vocab_n_tokens(vocab);
 
+        // extract unsent token prefix from generated_text
+        // this includes both complete characters (e.g., spaces) and incomplete UTF-8 bytes
+        // that were not sent yet due to incomplete UTF-8 sequences from previous tokens
+        std::string token_prefix;
+        if (slot.n_sent_text < slot.generated_text.size()) {
+            token_prefix = slot.generated_text.substr(slot.n_sent_text);
+        }
+
         if (post_sampling) {
             const auto * cur_p = common_sampler_get_candidates(slot.smpl, true);
             const size_t max_probs = cur_p->size;
@@ -1236,7 +1244,7 @@ struct server_context_impl {
             for (size_t i = 0; i < std::min(max_probs, n_probs); i++) {
                 result.probs.push_back({
                     cur_p->data[i].id,
-                    common_token_to_piece(ctx, cur_p->data[i].id, special),
+                    token_prefix + common_token_to_piece(ctx, cur_p->data[i].id, special),
                     cur_p->data[i].p
                 });
             }
@@ -1258,7 +1266,7 @@ struct server_context_impl {
             for (size_t i = 0; i < std::min(n_vocab, n_probs); i++) {
                 result.probs.push_back({
                     cur[i].id,
-                    common_token_to_piece(ctx, cur[i].id, special),
+                    token_prefix + common_token_to_piece(ctx, cur[i].id, special),
                     cur[i].p
                 });
             }
