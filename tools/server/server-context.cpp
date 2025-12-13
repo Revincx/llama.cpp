@@ -1219,6 +1219,13 @@ struct server_context_impl {
         size_t n_probs = slot.task->params.sampling.n_probs;
         size_t n_vocab = llama_vocab_n_tokens(vocab);
 
+        // extract unsent text prefix from generated_text
+        // this includes both complete characters (e.g., spaces) and incomplete UTF-8 bytes
+        // that were not sent yet due to incomplete UTF-8 sequences from previous tokens
+        if (slot.n_sent_text < slot.generated_text.size()) {
+            result.incomplete_utf8_prefix = slot.generated_text.substr(slot.n_sent_text);
+        }
+
         if (post_sampling) {
             const auto * cur_p = common_sampler_get_candidates(slot.smpl, true);
             const size_t max_probs = cur_p->size;

@@ -237,6 +237,7 @@ struct completion_token_output {
     llama_token tok;
     float prob;
     std::string text_to_send;
+    std::string incomplete_utf8_prefix; // incomplete UTF-8 bytes from previous tokens
     struct prob_info {
         llama_token tok;
         std::string txt;

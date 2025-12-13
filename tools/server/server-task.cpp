@@ -518,12 +518,14 @@ static inline std::string stop_type_to_str(stop_type type) {
 json completion_token_output::to_json(bool post_sampling_probs) const {
     json probs_for_token = json::array();
     for (const auto & p : probs) {
-        std::string txt(p.txt);
+        // combine incomplete UTF-8 prefix with the token text to form complete characters
+        std::string combined = incomplete_utf8_prefix + p.txt;
+        std::string txt(combined);
         txt.resize(validate_utf8(txt));
         probs_for_token.push_back(json {
             {"id",      p.tok},
             {"token",   txt},
-            {"bytes",   str_to_bytes(p.txt)},
+            {"bytes",   str_to_bytes(combined)},
             {
                 post_sampling_probs ? "prob" : "logprob",
                 post_sampling_probs ? p.prob : logarithm(p.prob)
