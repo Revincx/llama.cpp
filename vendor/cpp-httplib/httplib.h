@@ -8,28 +8,8 @@
 #ifndef CPPHTTPLIB_HTTPLIB_H
 #define CPPHTTPLIB_HTTPLIB_H
 
-#define CPPHTTPLIB_VERSION "0.37.0"
-#define CPPHTTPLIB_VERSION_NUM "0x002500"
-
-/*
- * Platform compatibility check
- */
-
-#if defined(_WIN32) && !defined(_WIN64)
-#if defined(_MSC_VER)
-#pragma message(                                                               \
-    "cpp-httplib doesn't support 32-bit Windows. Please use a 64-bit compiler.")
-#else
-#warning                                                                       \
-    "cpp-httplib doesn't support 32-bit Windows. Please use a 64-bit compiler."
-#endif
-#elif defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ < 8
-#warning                                                                       \
-    "cpp-httplib doesn't support 32-bit platforms. Please use a 64-bit compiler."
-#elif defined(__SIZEOF_SIZE_T__) && __SIZEOF_SIZE_T__ < 8
-#warning                                                                       \
-    "cpp-httplib doesn't support platforms where size_t is less than 64 bits."
-#endif
+#define CPPHTTPLIB_VERSION "0.37.2"
+#define CPPHTTPLIB_VERSION_NUM "0x002502"
 
 #ifdef _WIN32
 #if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0A00
@@ -707,6 +687,18 @@ inline from_chars_result<double> from_chars(const char *first, const char *last,
     return {first + (endptr - s.c_str()), std::errc::result_out_of_range};
   }
   return {first + (endptr - s.c_str()), std::errc{}};
+}
+
+inline bool parse_port(const char *s, size_t len, int &port) {
+  int val = 0;
+  auto r = from_chars(s, s + len, val);
+  if (r.ec != std::errc{} || val < 1 || val > 65535) { return false; }
+  port = val;
+  return true;
+}
+
+inline bool parse_port(const std::string &s, int &port) {
+  return parse_port(s.data(), s.size(), port);
 }
 
 } // namespace detail
@@ -2797,7 +2789,7 @@ inline size_t get_header_value_u64(const Headers &headers,
   std::advance(it, static_cast<ssize_t>(id));
   if (it != rng.second) {
     if (is_numeric(it->second)) {
-      return std::strtoull(it->second.data(), nullptr, 10);
+      return static_cast<size_t>(std::strtoull(it->second.data(), nullptr, 10));
     } else {
       is_invalid_value = true;
     }
